@@ -32,13 +32,13 @@ life-saving list of [Windows Python Extension Libraries](Unofficial Windows Bina
 to install cvxpy and any other failing pip installs.
 
 ```
-tensorflow
+tensorflow (1.5)
 matplotlib
-gym
+gym (0.9.4)
 numpy
 Box2D
 logging
-pyglet
+pyglet (1.3.2)
 cvxpy
 abc
 concurrent
@@ -46,14 +46,6 @@ concurrent
 python pip install PATH_TO_YOUR_DOWNLOADED_LIBRARY (ending in whl)
 ```
 
-### Checking Functionality
-
-Run the main_simulation.py and check that the simulation starts. A window showing the rocket should pop up.
-If running from terminal, simply:
-
-```
-python main_simulation.py
-```
 ## Problem Definition
 ### Introduction
 

@@ -10,7 +10,8 @@ import shutil
 import gym
 import argparse
 import sklearn.preprocessing
-sys.path.append('C://Users//REUBS_LEN//PycharmProjects//RocketLanding')
+sys.path.append('/content/rocket-lander/') #Colab dir
+#sys.path.append('D://Coding//rocket-lander') #local dir
 from environments.rocketlander import get_state_sample
 from constants import *
 from .utils import Utils
