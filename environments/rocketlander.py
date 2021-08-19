@@ -64,6 +64,7 @@ class RocketLander(gym.Env):
         self.lander = None
         self.particles = []
         self.state = []
+        self.winds = []
         self.prev_shaping = None
 
         if settings.get('Observation Space Size'):
@@ -870,11 +871,18 @@ class RocketLander(gym.Env):
                 self.apply_disturbance('random', x_force, 0)
             else:
                 self.apply_disturbance('random', -x_force, 0)
+        else:
+            self.winds = [0, 0]
 
     def apply_random_y_disturbance(self, epsilon, y_force=2000):
         if np.random.rand() < epsilon:
             self.apply_disturbance('random', 0, -y_force)
-
+        else:
+            self.winds = [0, 0]
+    
+    def get_winds_value(self):
+        return self.winds
+            
     def move_barge_randomly(self, epsilon, left_or_right, x_movement=0.05):
         if np.random.rand() < epsilon:
             if left_or_right:
@@ -904,9 +912,15 @@ class RocketLander(gym.Env):
         if force is not None:
             if isinstance(force, str):
                 x, y = args
+                
+                windX_force = self.np_random.uniform(x)
+                windY_force = self.np_random.uniform(y)
+                
+                self.winds = [windX_force, windY_force]
+                
                 self.lander.ApplyForceToCenter((
-                    self.np_random.uniform(x),
-                    self.np_random.uniform(y)
+                    windX_force,
+                    windY_force
                 ), True)
             elif isinstance(force, tuple):
                 self.lander.ApplyForceToCenter(force, True)
