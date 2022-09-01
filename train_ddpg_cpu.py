@@ -35,14 +35,14 @@ simulation_settings = {'Side Engines': True,
 env = RocketLander(simulation_settings)
 #env = wrappers.Monitor(env, '/tmp/contlunarlander', force=True, write_upon_reset=True)
 
-FLAGS.retrain = False #Restore weights if False
-FLAGS.test = True #Test the model
+FLAGS.retrain = True #Restore weights if False
+FLAGS.test = False #Test the model
 FLAGS.num_episodes = 1
-FLAGS.save_state_act = True #Export State and Action of a single episode as .xlsx (only work if num_episodes = 1)
-FLAGS.save_reward = False #Export reward log as .xlsx
+FLAGS.save_state_act = False #Export State and Action of a single episode as .xlsx (only work if num_episodes = 1)
+FLAGS.save_reward = True #Export reward log as .xlsx
 FLAGS.render_episodes = 1 #When to render
 
-model_dir = 'D://Coding//rocket-lander//control_and_ai//DDPG//model1' #local dir
+model_dir = 'F:/OneDrive - UNIVERSITAS INDONESIA/Semester 8/Skripsi/rocket-lander/control_and_ai/DDPG/model1' #local dir
 
 with tf.device('/cpu:0'):
     agent = DDPG(
