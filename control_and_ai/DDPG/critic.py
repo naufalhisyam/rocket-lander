@@ -24,27 +24,39 @@ class Critic():
 
         self.phase = tf.placeholder(tf.bool, name='phase')  # Are we trianing or not?
 
-        #self.infer = self.create_nn_with_batch(self.features_ph, self.phase)
+        #self.infer = self.create_nn_with_batch(self.features_ph, self.phase) 
         self.infer = self.create_nn(self.features_ph)
+        self.infer2 = self.create_nn(self.features_ph, name = "critic2") #critic2
         self.weights = [v for v in tf.trainable_variables() if 'critic' in v.op.name]
-
+        self.weights2 = [v for v in tf.trainable_variables() if 'critic2' in v.op.name]
         # Target network code "repurposed" from Patrick Emani :^)
         self.target = self.create_nn(self.features_ph, name='critic_target')
+        self.target2 = self.create_nn(self.features_ph, name='critic_target2')
         #self.target = self.create_nn_with_batch(self.features_ph, self.phase, name='critic_target')
         self.target_weights = [v for v in tf.trainable_variables() if 'critic' in v.op.name][len(self.weights):]
-
+        self.target_weights2 = [v for v in tf.trainable_variables() if 'critic2' in v.op.name][len(self.weights2):]
+        print(self.weights)
         self.update_target_weights = \
         [self.target_weights[i].assign(tf.multiply(self.weights[i], self.tau) +
                                                   tf.multiply(self.target_weights[i], 1. - self.tau))
-                    for i in range(len(self.target_weights))]
-
+                                     for i in range(len(self.target_weights))]
+        self.update_target_weights2 = \
+        [self.target_weights2[i].assign(tf.multiply(self.weights2[i], self.tau) +
+                                                  tf.multiply(self.target_weights2[i], 1. - self.tau))
+                                     for i in range(len(self.target_weights2))]
+        
+        #with tf.variable_scope("icnv1", reuse=tf.AUTO_REUSE)
         self.wanted_qs = tf.placeholder(tf.float32, shape=(None, 1))
-
+        self.wanted_qs2 = tf.placeholder(tf.float32, shape=(None, 1))
+        
         self.loss = tf.reduce_mean(tf.square(self.wanted_qs - self.infer))
-
+        self.loss2 = tf.reduce_mean(tf.square(self.wanted_qs2 - self.infer2))
+        
         self.train = optimizer(learning_rate).minimize(self.loss)
+        self.train2 = optimizer(learning_rate).minimize(self.loss2)
 
         self.gradient = tf.gradients(self.infer, self.action_ph) # Why gradients here?. Called in update
+        self.gradient2 = tf.gradients(self.infer2, self.action_ph)
 
     def update(self, old_states, old_actions, rewards, new_states, new_actions, is_terminals):
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -71,6 +83,7 @@ class Critic():
                     })
 
             self.sess.run(self.update_target_weights)
+            self.sess.run(self.update_target_weights2)
 
     def get_gradients(self, state, action):
         grads = self.sess.run(self.gradient,
@@ -82,7 +95,7 @@ class Critic():
 
         return grads[0]
 
-    def create_nn_with_batch(self, state, phase, name='critic'):
+    def create_nn_with_batch(self, state, phase, name='critic'): #ngga dipake
         input = int(state.shape[1])
         with tf.variable_scope(name + '_fc_1'):
             fc1 = batch_layer(state, input, 400, phase, name+'Layer-0', nonlinearity=tf.nn.relu)
@@ -93,6 +106,17 @@ class Critic():
         return fc3
 
     def create_nn(self, features, name='critic'):
+        with tf.variable_scope(name + '_fc_1'):
+            fc1 = layer(features, 400, activation=tf.nn.relu)
+        with tf.variable_scope(name + '_fc_2'):
+            fc2 = layer(fc1, 300, activation=tf.sigmoid)
+        with tf.variable_scope(name + '_fc_3'):
+            fc3 = layer(fc2, 1, is_output=True)
+
+        return fc3
+
+
+    def create_nn2(self, features, name='critic2'):
         with tf.variable_scope(name + '_fc_1'):
             fc1 = layer(features, 400, activation=tf.nn.relu)
         with tf.variable_scope(name + '_fc_2'):
