@@ -129,7 +129,7 @@ class RocketLander(gym.Env):
                 x = x / W
                 y = y / H
         else:
-            x, y = W / 2, H / self.settings['Starting Y-Pos Constant']
+            x, y = W / 2 + np.random.uniform(-0.1, 0.1), H / self.settings['Starting Y-Pos Constant']
         self.initial_coordinates = (x, y)
 
         self._create_rocket(self.initial_coordinates)
@@ -197,8 +197,9 @@ class RocketLander(gym.Env):
         self.state = state  # Keep a record of the new state
 
         # Rewards for reinforcement learning
-        reward, shaping_element = self.__compute_rewards(state, m_power, s_power,
-                                        part.angle)  # part angle can be used as part of the reward
+        genes = self.settings.get('Genes')
+        reward = self.__compute_rewards(state, m_power, s_power,
+                                        part.angle, genes)  # part angle can be used as part of the reward
 
         # Check if the game is done, adjust reward based on the final state of the body
         state_reset_conditions = [
@@ -210,16 +211,13 @@ class RocketLander(gym.Env):
         if any(state_reset_conditions):
             done = True
             reward = -10
-            # print('reward if any(state_reset_conditon) =', reward)
         if not self.lander.awake:
             done = True
             reward = +10
-            # print("reward if not awake =", )
 
         self._update_particles()
-        # print('reward in _step()', reward)
-        # print('\n')
-        return np.array(state), reward, shaping_element, done, {}  # {} = info (required by parent class)
+
+        return np.array(state), reward, done, {}  # {} = info (required by parent class)
 
     """ PROBLEM SPECIFIC - PHYSICS, STATES, REWARDS"""
 
@@ -346,19 +344,19 @@ class RocketLander(gym.Env):
         return state, untransformed_state
 
     # ['dx','dy','x_vel','y_vel','theta','theta_dot','left_ground_contact','right_ground_contact']
-    def __compute_rewards(self, state, main_engine_power, side_engine_power, part_angle):
+    def __compute_rewards(self, state, main_engine_power, side_engine_power, part_angle, genes):
+        # genes = settings.get('Genes')
         reward = 0
-        shaping = -200 * np.sqrt(np.square(state[0]) + np.square(state[1])) \
-                  - 100 * np.sqrt(np.square(state[2]) + np.square(state[3])) \
-                  - 1000 * abs(state[4]) - 30 * abs(state[5]) \
-                  + 20 * state[6] + 20 * state[7]
+        # #default
+        # shaping = - 200 * np.sqrt(np.square(state[0]) + np.square(state[1])) \
+        #           - 100 * np.sqrt(np.square(state[2]) + np.square(state[3])) \
+        #           - 1000 * abs(state[4]) - 30 * abs(state[5]) \
+        #           + 20 * state[6] + 20 * state[7]
 
-        shaping_pos = -200 * np.sqrt(np.square(state[0]) + np.square(state[1]))
-        shaping_vel = - 100 * np.sqrt(np.square(state[2]) + np.square(state[3]))
-        shaping_ang = - 1000 * abs(state[4])
-        shaping_angvel =  - 30 * abs(state[5])
-        shaping_leftleg = + 20 * state[6]
-        shaping_rightleg = + 20 * state[7]
+        shaping = - 200 * np.sqrt(genes[0] * np.square(state[0]) + genes[1] * np.square(state[1])) \
+                  - 100 * np.sqrt(genes[2] * np.square(state[2]) + genes[3] * np.square(state[3])) \
+                  - 1000 * abs(genes[4] * state[4]) - 30 * abs(genes[5] * state[5]) \
+                  + 20 * (genes[6] * state[6]) + 20 * (genes[7] * state[7])
 
         # Introduce the concept of options by making reference markers wrt altitude and speed
         # if (state[4] < 0.052 and state[4] > -0.052):
@@ -377,30 +375,21 @@ class RocketLander(gym.Env):
 
         if self.prev_shaping is not None:
             reward = shaping - self.prev_shaping
-            # print('shaping-prev_shaping =', reward)
         self.prev_shaping = shaping
 
         # penalize the use of engines
-        reward += -main_engine_power * 0.3
+        # reward += -main_engine_power * 0.3
+        # if self.settings['Side Engines']:
+        #     reward += -side_engine_power * 0.3
+
+        reward += -main_engine_power * 0.3 * genes[8]
         if self.settings['Side Engines']:
-            reward += -side_engine_power * 0.3
+            reward += -side_engine_power * 0.3 * genes[9]
+
         # if self.settings['Vectorized Nozzle']:
-        #     reward += -100*np.abs(nozzle_angle) # Psi
-
-        shaping_fe = -main_engine_power * 0.3
-        shaping_fs = -side_engine_power * 0.3
-
-        shaping_element = [shaping_pos/10,
-                          shaping_vel/10,
-                          shaping_ang/10,
-                          shaping_angvel/10,
-                          shaping_leftleg/10,
-                          shaping_rightleg/10,
-                          shaping_fe/10,
-                          shaping_fs/10]
-
-        # print('reward/10 =', reward/10)
-        return reward / 10, shaping_element
+        #     reward += -100*np.abs(part_angle) # Psi
+        
+        return reward / 10
 
     """ PROBLEM SPECIFIC - RENDERING and OBJECT CREATION"""
 
@@ -906,7 +895,7 @@ class RocketLander(gym.Env):
     
     def get_winds_value(self):
         return self.winds
-    
+            
     def move_barge_randomly(self, epsilon, left_or_right, x_movement=0.05):
         if np.random.rand() < epsilon:
             if left_or_right:
@@ -968,7 +957,7 @@ class RocketLander(gym.Env):
         return np.dot(ss, cost_matrix)
 
 
-def get_state_sample(samples, normal_state=True, untransformed_state=True):
+def get_state_sample(samples, genes, normal_state=True, untransformed_state=True):
     simulation_settings = {'Side Engines': True,
                            'Clouds': False,
                            'Vectorized Nozzle': True,
@@ -977,7 +966,8 @@ def get_state_sample(samples, normal_state=True, untransformed_state=True):
                            'Starting Y-Pos Constant': 1,
                            'Initial Force': 'random',
                            'Rows': 1,
-                           'Columns': 2}
+                           'Columns': 2,
+                           'Genes':genes}
     env = RocketLander(simulation_settings)
     env.reset()
     state_samples = []
@@ -986,7 +976,7 @@ def get_state_sample(samples, normal_state=True, untransformed_state=True):
         f_side = np.random.uniform(-1, 1)
         psi = np.random.uniform(-90 * DEGTORAD, 90 * DEGTORAD)
         action = [f_main, f_side, psi]
-        s, r, re, done, info = env.step(action)
+        s, r, done, info = env.step(action)
         if normal_state:
             state_samples.append(s)
         else:

@@ -374,7 +374,7 @@ class RocketLander(gym.Env):
         if self.settings['Side Engines']:
             reward += -side_engine_power * 0.3
         # if self.settings['Vectorized Nozzle']:
-        #     reward += -100*np.abs(nozzle_angle) # Psi
+        #     reward += -100*np.abs(part_angle) # Psi
 
         return reward / 10
 
