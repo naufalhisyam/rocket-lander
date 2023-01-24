@@ -59,3 +59,6 @@ class Utils():
 
     def process_state(self, state):
         return self.normalize(state)
+    
+    def denormalize(self, state):
+        return self.normalizer.inverse_transform(np.array(state).reshape(1,-1)).flatten()
