@@ -1,5 +1,9 @@
 ipynb_checkpoints/*
 .idea/*
-__pycache__/*
+.vscode/*
+
 control_and_ai/DDPG/trained_models/*
 logs/*
+
+*.pyc
+

@@ -50,7 +50,7 @@ PID_SWITCH_HEIGHT = 15.72 #The height of the switch
 # y_force = 0 # y-axis wind force in Newton
 
 # DDPG Model directory
-model_dir = 'control_and_ai\DDPG\model_normal_state'
+model_dir = 'control_and_ai\DDPG/trained_models\model_normal_state'
 
 # Initialize DDPG Agent
 agent = DDPG(

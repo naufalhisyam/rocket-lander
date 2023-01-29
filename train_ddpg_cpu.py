@@ -42,7 +42,7 @@ FLAGS.save_state_act = False #Export State and Action of a single episode as .xl
 FLAGS.save_reward = True #Export reward log as .xlsx
 FLAGS.render_episodes = 1 #When to render
 
-model_dir = 'F:/OneDrive - UNIVERSITAS INDONESIA/Semester 8/Skripsi/rocket-lander/control_and_ai/DDPG/model1' #local dir
+model_dir = 'D://Coding//rocket-lander//control_and_ai//DDPG//model1' #local dir
 
 with tf.device('/cpu:0'):
     agent = DDPG(
